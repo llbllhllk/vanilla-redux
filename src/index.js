@@ -1,38 +1,64 @@
 import { createStore } from 'redux'
 
-const add = document.querySelector('#add')
-const minus = document.querySelector('#minus')
-const number = document.querySelector('span')
+const ul = document.querySelector('ul')
+const input = document.querySelector('input')
+const add = document.querySelector('button')
 
-const ADD = "ADD"
-const MINUS = "MINUS"
+const ADD_TODO = 'ADD_TODO'
+const DELETE_TODO = 'DELETE_TODO'
 
-const countModifer = (count = 0, action) => {
+const addToDo = text => {
+  return { type: ADD_TODO, text }
+}
+
+const deleteToDo = id => {
+  return { type: DELETE_TODO, id }
+}
+
+const todosModifier = (todos = [], action) => {
   switch (action.type) {
-    case ADD:
-      return (count += 1)
-    case MINUS:
-      return (count -= 1)
+    case ADD_TODO:
+      return [...todos, { text: action.text, id: Date.now() }]
+    case DELETE_TODO:
+      return todos.filter(todo => todo.id !== action.id)
     default:
-      return count
+      return todos
   }
 }
 
-const countStore = createStore(countModifer)
-
-const handleAdd = () => {
-  countStore.dispatch({ type: ADD })
+const paintToDo = () => {
+  const todosList = todos.getState()
+  ul.innerHTML = ""
+  todosList.forEach(todo => {
+    const li = document.createElement('li')
+    const delBtn = document.createElement('button')
+    li.innerText = todo.text
+    li.id = todo.id
+    delBtn.innerText = "del"
+    li.appendChild(delBtn)
+    ul.appendChild(li)
+    delBtn.addEventListener('click', dispatchDeleteToDo)
+  })
 }
 
-const handleMinus = () => {
-  countStore.dispatch({ type: MINUS })
+const todos = createStore(todosModifier)
+
+todos.subscribe(paintToDo)
+
+const dispatchAddTodo = text => {
+  todos.dispatch(addToDo(text))
 }
 
-const onChange = () => {
-  number.innerText = countStore.getState()
+const dispatchDeleteToDo = e => {
+  const id = parseInt(e.target.parentNode.id)
+  todos.dispatch(deleteToDo(id))
 }
 
-countStore.subscribe(onChange)
+const onSubmit = e => {
+  e.preventDefault()
+  const text = input.value
+  input.value = ''
+  dispatchAddTodo(text)
+}
 
-add.addEventListener('click', handleAdd)
-minus.addEventListener('click', handleMinus)
+add.addEventListener('click', onSubmit)
